@@ -1,53 +1,87 @@
-import Link from "next/link";
+"use client";
 
-import { LatestPost } from "@/app/_components/post";
-import { api, HydrateClient } from "@/trpc/server";
+import { useState } from "react";
+import { Dropzone } from "@/components/ui/dropzone";
+import { Navbar } from "@/components/ui/navbar";
 
-export default async function Home() {
-  const hello = await api.post.hello({ text: "from tRPC" });
+export default function Home() {
+  const [sheets, setSheets] = useState<any[]>([]);
 
-  void api.post.getLatest.prefetch();
+  const handleFileAccepted = (data: any) => {
+    setSheets(data);
+  };
 
   return (
-    <HydrateClient>
-      <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c] text-white">
-        <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16">
-          <h1 className="text-5xl font-extrabold tracking-tight sm:text-[5rem]">
-            Create <span className="text-[hsl(280,100%,70%)]">T3</span> App
-          </h1>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-8">
-            <Link
-              className="flex max-w-xs flex-col gap-4 rounded-xl bg-white/10 p-4 hover:bg-white/20"
-              href="https://create.t3.gg/en/usage/first-steps"
-              target="_blank"
-            >
-              <h3 className="text-2xl font-bold">First Steps →</h3>
-              <div className="text-lg">
-                Just the basics - Everything you need to know to set up your
-                database and authentication.
-              </div>
-            </Link>
-            <Link
-              className="flex max-w-xs flex-col gap-4 rounded-xl bg-white/10 p-4 hover:bg-white/20"
-              href="https://create.t3.gg/en/introduction"
-              target="_blank"
-            >
-              <h3 className="text-2xl font-bold">Documentation →</h3>
-              <div className="text-lg">
-                Learn more about Create T3 App, the libraries it uses, and how
-                to deploy it.
-              </div>
-            </Link>
-          </div>
-          <div className="flex flex-col items-center gap-2">
-            <p className="text-2xl text-white">
-              {hello ? hello.greeting : "Loading tRPC query..."}
-            </p>
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      <main className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-white rounded-xl shadow-sm p-8 mb-8">
+            <div className="text-center mb-8">
+              <h1 className="text-3xl font-bold text-gray-900 mb-4">
+                Excel Upload der aktuellen Berichte
+              </h1>
+              <p className="text-gray-600">
+                Hier die Excel-Datei hochladen, um die aktuellen Daten aus verschiedenen Blättern zu extrahieren und darauf basierend Szenarien zu erstellen und zu simulieren.
+              </p>
+            </div>
+
+            <Dropzone onFileAccepted={handleFileAccepted} />
           </div>
 
-          <LatestPost />
+          {sheets.length > 0 && (
+            <div className="space-y-8">
+              <h2 className="text-2xl font-semibold text-gray-900">
+                Gefundene Blätter
+              </h2>
+              <div className="space-y-6">
+                {sheets.map((sheet, index) => (
+                  <div
+                    key={index}
+                    className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+                  >
+                    <div className="px-6 py-4 border-b border-gray-200">
+                      <h3 className="text-lg font-medium text-gray-900">
+                        {sheet.name}
+                      </h3>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead>
+                          <tr>
+                            {sheet.data[0]?.map((header: string, i: number) => (
+                              <th
+                                key={i}
+                                className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                              >
+                                {header}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {sheet.data.slice(1).map((row: any[], rowIndex: number) => (
+                            <tr key={rowIndex} className="hover:bg-gray-50">
+                              {row.map((cell: any, cellIndex: number) => (
+                                <td
+                                  key={cellIndex}
+                                  className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
+                                >
+                                  {cell}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </main>
-    </HydrateClient>
+    </div>
   );
 }
